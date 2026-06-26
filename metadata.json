@@ -1,0 +1,6 @@
+{
+  "name": "Smart Notebook Samma Das",
+  "description": "A minimalist, clean note-taking application inspired by Google Keep, created for Samma Das.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
