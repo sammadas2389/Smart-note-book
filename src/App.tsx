@@ -12,13 +12,16 @@ import {
   AlertCircle,
   Clock,
   UserCheck,
-  UserPen
+  UserPen,
+  Download
 } from 'lucide-react';
 import { Note, UserProfile } from './types';
 import NoteInput from './components/NoteInput';
 import NoteCard from './components/NoteCard';
 import ConfirmationModal from './components/ConfirmationModal';
 import ProfileModal from './components/ProfileModal';
+import EditNoteModal from './components/EditNoteModal';
+import DownloadModal from './components/DownloadModal';
 import { getCurrentBengaliTimestamp, toBengaliNumerals } from './utils';
 
 const CATEGORIES_FILTER = [
@@ -46,6 +49,13 @@ export default function App() {
   // Deletion Modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
+
+  // Edit Modal state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [noteToEdit, setNoteToEdit] = useState<Note | null>(null);
+
+  // Download/Export Modal state
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
 
   // Load notes and profile from LocalStorage on component mount
   useEffect(() => {
@@ -146,6 +156,31 @@ export default function App() {
     
     setDeleteModalOpen(false);
     setNoteToDelete(null);
+  };
+
+  // 3b. Request Edit Note (Opens Modal)
+  const handleEditRequest = (note: Note) => {
+    setNoteToEdit(note);
+    setEditModalOpen(true);
+  };
+
+  // 3c. Save Edited Note (Triggered from Modal)
+  const handleSaveEditedNote = (updatedNote: Note) => {
+    const updatedNotes = notes.map((n) => (n.id === updatedNote.id ? updatedNote : n));
+    setNotes(updatedNotes);
+    saveNotesToStorage(updatedNotes);
+  };
+
+  // 3d. Import Notes (Merges uploaded notes and saves them)
+  const handleImportNotes = (importedNotes: Note[]) => {
+    // Generate new unique ids for imported notes to prevent conflicts with existing notes
+    const newNotes = importedNotes.map(n => ({
+      ...n,
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 7)
+    }));
+    const updatedNotes = [...notes, ...newNotes];
+    setNotes(updatedNotes);
+    saveNotesToStorage(updatedNotes);
   };
 
   // 4. Toggle Pin status
@@ -255,6 +290,16 @@ export default function App() {
             )}
           </div>
 
+          {/* Download & Backup Trigger Button */}
+          <button
+            onClick={() => setDownloadModalOpen(true)}
+            className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs shadow-amber-100 transition-all cursor-pointer whitespace-nowrap shrink-0"
+            title="ডাউনলোড ও ব্যাকআপ"
+          >
+            <Download size={14} className="stroke-[2.5]" />
+            <span>ডাউনলোড ও ব্যাকআপ</span>
+          </button>
+
           {/* Owner Quick Profile / Status Indicator */}
           <button
             onClick={() => setProfileModalOpen(true)}
@@ -335,6 +380,17 @@ export default function App() {
               )}
             </button>
           ))}
+
+          {/* Sidebar Download Button */}
+          <div className="md:border-t md:border-slate-100 md:pt-4 md:mt-4">
+            <button
+              onClick={() => setDownloadModalOpen(true)}
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-amber-600 hover:bg-amber-50/50 bg-amber-50/20 md:w-full transition-all duration-200 shrink-0 cursor-pointer border border-amber-200/40"
+            >
+              <Download size={15} className="stroke-[2.5]" />
+              <span>ডাউনলোড ও ব্যাকআপ</span>
+            </button>
+          </div>
         </aside>
 
         {/* Right Side: Notes Board */}
@@ -389,6 +445,7 @@ export default function App() {
                             key={note.id}
                             note={note}
                             onDeleteRequest={handleDeleteRequest}
+                            onEditRequest={handleEditRequest}
                             onTogglePin={handleTogglePin}
                             onChangeColor={handleChangeColor}
                             onChangeCategory={handleChangeCategory}
@@ -416,6 +473,7 @@ export default function App() {
                             key={note.id}
                             note={note}
                             onDeleteRequest={handleDeleteRequest}
+                            onEditRequest={handleEditRequest}
                             onTogglePin={handleTogglePin}
                             onChangeColor={handleChangeColor}
                             onChangeCategory={handleChangeCategory}
@@ -466,6 +524,26 @@ export default function App() {
         onClose={() => setProfileModalOpen(false)}
         profile={profile}
         onSave={saveProfileToStorage}
+      />
+
+      {/* Edit Note Modal */}
+      <EditNoteModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setNoteToEdit(null);
+        }}
+        note={noteToEdit}
+        onSave={handleSaveEditedNote}
+      />
+
+      {/* Download and Backup Modal */}
+      <DownloadModal
+        isOpen={downloadModalOpen}
+        onClose={() => setDownloadModalOpen(false)}
+        notes={notes}
+        profile={profile}
+        onImportNotes={handleImportNotes}
       />
     </div>
   );

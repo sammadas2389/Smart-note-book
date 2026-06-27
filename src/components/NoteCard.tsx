@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Pin, Trash2, Folder, Palette, Check, Calendar } from 'lucide-react';
+import { Pin, Trash2, Folder, Palette, Check, Calendar, Pencil } from 'lucide-react';
 import { Note } from '../types';
 import { formatBengaliDate } from '../utils';
 
@@ -8,6 +8,7 @@ interface NoteCardProps {
   key?: string;
   note: Note;
   onDeleteRequest: (note: Note) => void;
+  onEditRequest: (note: Note) => void;
   onTogglePin: (id: string) => void;
   onChangeColor: (id: string, color: string) => void;
   onChangeCategory: (id: string, category: string) => void;
@@ -35,6 +36,7 @@ const CATEGORIES = [
 export default function NoteCard({
   note,
   onDeleteRequest,
+  onEditRequest,
   onTogglePin,
   onChangeColor,
   onChangeCategory,
@@ -56,14 +58,21 @@ export default function NoteCard({
         activeColorObj.bgClass
       } ${note.isPinned ? 'ring-2 ring-amber-100 border-amber-300' : 'hover:border-slate-300'}`}
     >
-      <div>
+      {/* Clickable Note Body Area */}
+      <div 
+        onClick={() => onEditRequest(note)}
+        className="cursor-pointer flex-1 flex flex-col"
+      >
         {/* Card Header (Title & Pin) */}
         <div className="flex items-start justify-between gap-2 mb-2.5">
-          <h4 className="font-semibold text-slate-800 text-base leading-snug break-words pr-4">
+          <h4 className="font-semibold text-slate-800 text-base leading-snug break-words pr-8">
             {note.title || <span className="text-slate-400 italic font-normal">শিরোনামহীন নোট</span>}
           </h4>
           <button
-            onClick={() => onTogglePin(note.id)}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent opening edit modal when pinning
+              onTogglePin(note.id);
+            }}
             className={`absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-500/5 transition-all md:opacity-0 group-hover:opacity-100 ${
               note.isPinned ? 'text-amber-500 md:opacity-100' : 'text-slate-400 hover:text-slate-600'
             }`}
@@ -74,7 +83,7 @@ export default function NoteCard({
         </div>
 
         {/* Card Content */}
-        <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap break-words mb-4">
+        <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap break-words mb-4 flex-1">
           {note.content}
         </p>
       </div>
@@ -95,6 +104,15 @@ export default function NoteCard({
 
           {/* Inline Action Buttons (Visible on hover on Desktop, always on mobile) */}
           <div className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            {/* Edit Button */}
+            <button
+              onClick={() => onEditRequest(note)}
+              className="p-1.5 rounded-md text-slate-400 hover:text-amber-600 hover:bg-amber-50/50 transition-colors cursor-pointer"
+              title="সম্পাদনা করুন"
+            >
+              <Pencil size={14} />
+            </button>
+
             {/* Color Palette Icon */}
             <div className="relative">
               <button
